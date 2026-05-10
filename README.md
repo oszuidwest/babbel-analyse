@@ -10,7 +10,7 @@ A GitHub Action runs every Monday night at 03:00 NL time, refreshes the data and
 
 **Last week (2026-W19, n=51):** 63% accurate, 31% edited, 6% rewritten.
 
-![Share of accurate / edited / rewritten per week](chart-buckets.svg?v=c0b90baf)
+![Share of accurate / edited / rewritten per week](chart-buckets.svg?v=7122b1a8)
 
 ![Mean word count AI vs. published per week](chart-words.svg?v=5076ae03)
 

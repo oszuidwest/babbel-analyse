@@ -7,6 +7,7 @@ The README is rewritten between the markers <!-- BEGIN:STATS --> ... <!-- END:ST
 """
 
 import hashlib
+import html
 import json
 from pathlib import Path
 
@@ -48,11 +49,11 @@ def render_chart(weeks: list[dict]) -> str:
         f"Share of stories per editorial category, per week</text>",
     ]
 
-    # Legend (top-left)
+    # Legend (top-left). Escape so the inline < and > stay as text, not XML markup.
     legend_items = [
-        ("accurate", "accurate (<=5% changed)"),
-        ("edited", "edited (5-40%)"),
-        ("rewritten", "rewritten (>40%)"),
+        ("accurate", html.escape("accurate (<=5% changed)")),
+        ("edited", html.escape("edited (5-40%)")),
+        ("rewritten", html.escape("rewritten (>40%)")),
     ]
     lx = pad_l
     ly = 42
