@@ -222,10 +222,10 @@ def render_section(weeks: list[dict]) -> str:
     last = weeks[-1]
     n = last["n"] or 1
     headline = (
-        f"**Last week ({last['week']}, n={last['n']}):** "
-        f"{last['accurate'] / n * 100:.0f}% accurate, "
-        f"{last['edited'] / n * 100:.0f}% edited, "
-        f"{last['rewritten'] / n * 100:.0f}% rewritten."
+        f"**Last week ({last['week']}, n={last['n']}):**\n\n"
+        f"- {last['accurate'] / n * 100:.0f}% accurate\n"
+        f"- {last['edited'] / n * 100:.0f}% edited\n"
+        f"- {last['rewritten'] / n * 100:.0f}% rewritten"
     )
     buckets_url = f"{BUCKETS_CHART_PATH.name}?v={cache_bust(BUCKETS_CHART_PATH)}"
     words_url = f"{WORDS_CHART_PATH.name}?v={cache_bust(WORDS_CHART_PATH)}"
