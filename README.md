@@ -8,18 +8,19 @@ A GitHub Action runs every Monday night at 03:00 NL time, refreshes the data and
 <!-- BEGIN:STATS -->
 ## Latest results
 
-**Last week (2026-W24, n=52):**
+**Last week (2026-W25, n=53):**
 
-- 62% accurate
-- 31% edited
-- 8% rewritten
+- 49% accurate
+- 38% edited
+- 13% rewritten
 
-![Share of accurate / edited / rewritten per week](chart-buckets.svg?v=79938788)
+![Share of accurate / edited / rewritten per week](chart-buckets.svg?v=766015bd)
 
-![Mean word count AI vs. published per week](chart-words.svg?v=66aa1a38)
+![Mean word count AI vs. published per week](chart-words.svg?v=d6fb8ed7)
 
 | Week | n | % accurate | % edited | % rewritten | Words AI | Words pub. |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2026-W25 | 53 | 49% | 38% | 13% | 63 | 64 |
 | 2026-W24 | 52 | 62% | 31% | 8% | 63 | 64 |
 | 2026-W23 | 53 | 68% | 25% | 8% | 62 | 64 |
 | 2026-W22 | 45 | 40% | 42% | 18% | 62 | 64 |
@@ -31,7 +32,6 @@ A GitHub Action runs every Monday night at 03:00 NL time, refreshes the data and
 | 2026-W16 | 55 | 55% | 44% | 2% | 63 | 63 |
 | 2026-W15 | 49 | 27% | 10% | 63% | 65 | 63 |
 | 2026-W14 | 56 | 18% | 9% | 73% | 68 | 63 |
-| 2026-W13 | 51 | 2% | 14% | 84% | 108 | 69 |
 <!-- END:STATS -->
 
 ## Running locally
