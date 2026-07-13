@@ -388,5 +388,20 @@
     "rewritten": 7,
     "words_ai_mean": 61.369565217391305,
     "words_final_mean": 62.108695652173914
+  },
+  {
+    "week": "2026-W28",
+    "n": 51,
+    "pct_unchg": 47.05882352941176,
+    "sim_med": 0.993103448275862,
+    "sim_mean": 0.9164866900000469,
+    "tok_med": 0.02941176470588236,
+    "tok_mean": 0.12654548282091369,
+    "len_med": 1.0,
+    "accurate": 31,
+    "edited": 15,
+    "rewritten": 5,
+    "words_ai_mean": 61.09803921568628,
+    "words_final_mean": 63.09803921568628
   }
 ]
