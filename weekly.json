@@ -574,14 +574,29 @@
     "n": 54,
     "pct_unchg": 24.074074074074073,
     "sim_med": 0.9651184036184937,
-    "sim_mean": 0.8850982601705888,
+    "sim_mean": 0.8790758559381062,
     "tok_med": 0.08193979933110368,
-    "tok_mean": 0.16115178925480528,
+    "tok_mean": 0.1686801394725703,
     "len_med": 1.0011933174224343,
     "accurate": 23,
-    "edited": 25,
-    "rewritten": 6,
+    "edited": 24,
+    "rewritten": 7,
     "words_ai_mean": 63.888888888888886,
-    "words_final_mean": 65.48148148148148
+    "words_final_mean": 65.66666666666667
+  },
+  {
+    "week": "2026-W41",
+    "n": 49,
+    "pct_unchg": 55.10204081632652,
+    "sim_med": 1.0,
+    "sim_mean": 0.9376450795441632,
+    "tok_med": 0.0,
+    "tok_mean": 0.08905055887521392,
+    "len_med": 1.0,
+    "accurate": 35,
+    "edited": 9,
+    "rewritten": 5,
+    "words_ai_mean": 63.12244897959184,
+    "words_final_mean": 64.57142857142857
   }
 ]
