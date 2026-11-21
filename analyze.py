@@ -33,13 +33,13 @@ def char_similarity(a: str, b: str) -> float:
     return difflib.SequenceMatcher(a=a, b=b, autojunk=False).ratio()
 
 
-# Filter to stories with both AI text and final text
+# Filter to broadcast stories (finished airing, not deleted) with both AI text and final text
 usable = []
 for s in stories:
     md = s.get("metadata") or {}
     ai = md.get("original_speech_text")
     final = s.get("text")
-    if not ai or not final:
+    if not ai or not final or s.get("status") != "expired" or s.get("deleted_at"):
         continue
     usable.append(
         {
@@ -47,12 +47,11 @@ for s in stories:
             "created_at": s["created_at"],
             "ai": ai,
             "final": final,
-            "done": s.get("status") == "expired" and not s.get("deleted_at"),
         }
     )
 
 print(f"total stories: {len(stories)}")
-print(f"usable (both AI + final present): {len(usable)}")
+print(f"usable (broadcast, both AI + final present): {len(usable)}")
 print(f"discarded: {len(stories) - len(usable)}\n")
 
 # Bucket by ISO week
@@ -92,8 +91,8 @@ for week in sorted(weekly):
     lens = [x["len_ratio"] for x in items]
     words_ai = [len(tokens(x["ai"])) for x in items]
     words_final = [len(tokens(x["final"])) for x in items]
-    # Kinds of change, only when every finished edited story of the week has a current label.
-    to_label = [x for x in items if x["done"] and x["tok_edit"] > ACCURATE_MAX]
+    # Kinds of change, only when every edited story of the week has a current label.
+    to_label = [x for x in items if x["tok_edit"] > ACCURATE_MAX]
     found = [labels.get(str(x["id"])) for x in to_label]
     covered = to_label and all(label.is_current(f, x) for f, x in zip(found, to_label, strict=True))
     accurate = sum(1 for x in items if x["tok_edit"] <= ACCURATE_MAX)

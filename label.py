@@ -80,7 +80,8 @@ def edit_fraction(a: str, b: str) -> float:
     if not ta and not tb:
         return 0.0
     sm = difflib.SequenceMatcher(a=ta, b=tb, autojunk=False)
-    return 1 - sum(m.size for m in sm.get_matching_blocks()) / max(len(ta), len(tb))
+    n = max(len(ta), len(tb))
+    return (n - sum(m.size for m in sm.get_matching_blocks())) / n  # exact at 5%, no 1 - x
 
 
 def is_current(label, c):
@@ -119,9 +120,12 @@ def main():
     for i in range(0, min(len(pending), MAX_CALLS * BATCH), BATCH):
         batch = {c["id"]: c for c in pending[i : i + BATCH]}
         for item in classify(batch.values()):
-            kinds = sorted({k for k in item["kinds"] if k in KINDS})
-            if str(item["id"]) in batch and kinds:  # unknown ids and empty answers are skipped
-                labels[str(item["id"])] = {"kinds": kinds, "key": key(batch[str(item["id"])])}
+            if not isinstance(item, dict) or not isinstance(item.get("kinds"), list):
+                continue  # a malformed item must not cost the valid ones
+            sid = str(item.get("id"))
+            kinds = sorted({k for k in item["kinds"] if isinstance(k, str) and k in KINDS})
+            if sid in batch and kinds:  # unknown ids and empty answers are skipped
+                labels[sid] = {"kinds": kinds, "key": key(batch[sid])}
         # Save after every call, so a stopped run keeps what it paid for.
         LABELS.write_text(json.dumps(labels, ensure_ascii=False, indent=1, sort_keys=True))
 
