@@ -35,13 +35,13 @@ def call(method, body=None):
         return json.load(r)
 
 
-def git(*args):
-    return subprocess.run(["git", *args], capture_output=True, text=True, check=True).stdout
+def git(*args):  # bytes, decoded without newline changes: the hash must match the live bytes
+    return subprocess.run(["git", *args], capture_output=True, check=True).stdout.decode()
 
 
 commits = git("log", "--format=%H", "--", "speech-prompt.txt").split()
 committed = {sha(git("show", f"{c}:speech-prompt.txt")) for c in commits}
-new, live = Path("speech-prompt.txt").read_text(), call("GET")
+new, live = Path("speech-prompt.txt").read_bytes().decode(), call("GET")
 if live["sha256"] == sha(new):
     sys.exit(print("WordPress already has this prompt"))  # exit code 0
 if live["sha256"] not in committed:

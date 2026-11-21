@@ -14,6 +14,7 @@ import math
 import os
 import random
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import label
 
@@ -51,10 +52,10 @@ JUDGE = (
 )
 
 
-def made_with(gen, prompt):
-    """The plugin fills {year} in the site's timezone, which can be a year off UTC."""
-    y = int(gen["generated_at"][:4])
-    return any(gen.get("prompt") == prompt.replace("{year}", str(v)) for v in (y - 1, y, y + 1))
+def with_year(prompt, when):
+    """{year} as the plugin fills it: wp_date('Y'), in the site's timezone."""
+    year = dt.datetime.fromisoformat(when).astimezone(ZoneInfo("Europe/Amsterdam")).year
+    return prompt.replace("{year}", str(year))
 
 
 def cases(stories, prompt):
@@ -77,7 +78,7 @@ def cases(stories, prompt):
             and c["final"]
             and c["article"]
             and len(c["article"]) <= ARTICLE_MAX
-            and made_with(gen, prompt)
+            and gen.get("prompt") == with_year(prompt, gen["generated_at"])
         ):
             out.append(c)
     return sorted(out, key=lambda c: c["created_at"])
@@ -90,7 +91,7 @@ def generate(prompt, examples, c):
         user = EXAMPLE.format(lab) + "\n\n" + ARTICLE.format(" ".join(e["article"].split()))
         msgs += [{"role": "user", "content": user}, {"role": "assistant", "content": e["final"]}]
     msgs.append({"role": "user", "content": ARTICLE.format(c["article"])})
-    instructions = prompt.replace("{year}", c["created_at"][:4])
+    instructions = with_year(prompt, c["created_at"])
     return label.call(instructions, msgs, model=PROD_MODEL, json_mode=False, max_tokens=1000)
 
 
@@ -102,9 +103,13 @@ def judge(c, current, new, swap):
         'Answer in JSON: {"better": "A", "B" or "same", "a_unsupported": true or false, '
         '"b_unsupported": true or false}',
     )
-    r = json.loads(out)  # a missing or malformed answer stops the run
+    r = json.loads(out)
+    if r.get("better") not in ("A", "B", "same") or not all(
+        isinstance(r.get(k), bool) for k in ("a_unsupported", "b_unsupported")
+    ):
+        raise ValueError(f"malformed judgement: {out}")  # stop rather than guess
     names = {"A": "new" if swap else "current", "B": "current" if swap else "new"}
-    unsupported = {names["A"]: r["a_unsupported"] is True, names["B"]: r["b_unsupported"] is True}
+    unsupported = {names["A"]: r["a_unsupported"], names["B"]: r["b_unsupported"]}
     return names.get(r["better"], "same"), unsupported
 
 
@@ -174,7 +179,7 @@ def check(prompt, cs):
 
 
 def main():
-    prompt = PROMPT.read_text()
+    prompt = PROMPT.read_bytes().decode()  # keep the CRLF line ends the live prompt has
     cs = cases(json.loads(Path("stories.json").read_text()), prompt)
     lines, new = check(prompt, cs)
     report = Path("reports") / f"{dt.date.today().isoformat()}.md"
