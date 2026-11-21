@@ -5,3 +5,5 @@ mt-report.md
 *.ts
 *.png
 sanity.py
+pilot.md
+__pycache__/

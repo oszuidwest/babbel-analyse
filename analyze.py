@@ -5,11 +5,16 @@ import datetime as dt
 import difflib
 import json
 import statistics
-from collections import defaultdict
+from collections import Counter, defaultdict
+from pathlib import Path
 
 # Bucket thresholds, by token-edit fraction (Levenshtein over word tokens).
 ACCURATE_MAX = 0.05  # <=5% of words changed
 EDITED_MAX = 0.40  # 5-40% of words changed; rewritten = the remainder
+WORD_LIMIT = 65  # what the speech prompt asks for
+
+# Kinds of change per edited story, from label.py. Missing file = no label columns.
+labels = json.loads(Path("labels.json").read_text()) if Path("labels.json").exists() else {}
 
 with open("stories.json") as f:
     stories = json.load(f)
@@ -98,6 +103,8 @@ for week in sorted(weekly):
     lens = [x["len_ratio"] for x in items]
     words_ai = [len(tokens(x["ai"])) for x in items]
     words_final = [len(tokens(x["final"])) for x in items]
+    edited_ids = [str(x["id"]) for x in items if x["tok_edit"] > ACCURATE_MAX]
+    kinds = Counter(k for i in edited_ids if i in labels for k in labels[i]["kinds"])
     accurate = sum(1 for x in items if x["tok_edit"] <= ACCURATE_MAX)
     edited = sum(1 for x in items if ACCURATE_MAX < x["tok_edit"] <= EDITED_MAX)
     rewritten = n - accurate - edited
@@ -116,6 +123,11 @@ for week in sorted(weekly):
             "rewritten": rewritten,
             "words_ai_mean": mean(words_ai),
             "words_final_mean": mean(words_final),
+            "over_limit_ai": sum(w > WORD_LIMIT for w in words_ai),
+            "over_limit_final": sum(w > WORD_LIMIT for w in words_final),
+            "edited_total": len(edited_ids),
+            "labelled": sum(i in labels for i in edited_ids),
+            "kinds": dict(sorted(kinds.items())),
         }
     )
     print(

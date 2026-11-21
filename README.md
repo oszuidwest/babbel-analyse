@@ -34,6 +34,25 @@ A GitHub Action runs every Monday night at 03:00 NL time, refreshes the data and
 | 2026-W35 | 48 | 67% | 19% | 15% | 63 | 64 |
 <!-- END:STATS -->
 
+## Kinds of change
+
+`label.py` asks a model what kind of change the editors made to each edited story (over 5%
+of words changed): a fact fixed, something missing from the article added, information
+added that is not in the article, timing, a style rule or taste. One story can have several
+kinds. The labels are kept per story in `labels.json`, so each story is labelled once. A
+story is labelled again only when its texts change or the classifier changes.
+
+The model needs the article the AI worked from. New stories carry it in their Babbel
+metadata. For older stories, `--articles` takes the text rebuilt from WordPress revisions.
+
+The kinds only show up in the table after an editor has checked a sample: run
+`label.py --sample 40`, have an editor check `pilot.md`, and list the kinds that hold up in
+`PUBLISHED_KINDS` in `update_readme.py`. A week shows a dash for a kind when fewer than 80%
+of its edited stories have a label.
+
+Every run that calls OpenAI stops when it has used `MAX_INPUT_TOKENS` or
+`MAX_OUTPUT_TOKENS`, as reported by OpenAI.
+
 ## Running locally
 
 ```sh
@@ -47,3 +66,4 @@ python3 analyze.py     # writes weekly.json
 
 - `BABBEL_USERNAME`
 - `BABBEL_PASSWORD`
+- `OPENAI_API_KEY`: for labelling the kinds of change
