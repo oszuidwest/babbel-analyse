@@ -45,7 +45,9 @@ def git(*args):  # bytes, decoded without newline changes: the hash must match t
     return subprocess.run(["git", *args], capture_output=True, check=True).stdout.decode()
 
 
-commits = git("log", "--full-history", "--format=%H", "--", "speech-prompt.txt").split()
+# --diff-filter=d leaves out commits that deleted the file, which have no version to read.
+log = git("log", "--full-history", "--diff-filter=d", "--format=%H", "--", "speech-prompt.txt")
+commits = log.split()
 committed = {sha(git("show", f"{c}:speech-prompt.txt")) for c in commits}
 new, live = Path("speech-prompt.txt").read_bytes().decode(), call("GET")
 if live["sha256"] == sha(new):

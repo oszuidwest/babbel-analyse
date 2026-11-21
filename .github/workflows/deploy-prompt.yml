@@ -20,6 +20,7 @@ jobs:
         with:
           ref: main  # a queued run deploys what main has now, not its own older commit
           fetch-depth: 0  # every committed version of the prompt
+          persist-credentials: false  # only reads history
 
       - name: Put the prompt live in WordPress
         env:

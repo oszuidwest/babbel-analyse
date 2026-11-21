@@ -13,6 +13,7 @@ import json
 import math
 import os
 import random
+import sys
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -189,7 +190,9 @@ def main():
     lines, new = check(prompt, cs)
     report = Path("reports") / f"{dt.date.today().isoformat()}.md"
     report.parent.mkdir(exist_ok=True)
-    report.write_text("\n".join([f"# Prompt check {dt.date.today().isoformat()}", "", *lines, ""]))
+    text = "\n".join([f"# Prompt check {dt.date.today().isoformat()}", "", *lines, ""])
+    report.write_text(text)
+    print(text, file=sys.stderr)  # also in the job log, in case pushing the report fails
     if new:
         PROMPT.write_text(new)
     print(f"report={report}\naccepted={'true' if new else 'false'}")
