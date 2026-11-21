@@ -167,6 +167,7 @@ def main():
                 "model": model,
                 "version": llm.CLASSIFIER_VERSION,
                 "input": input_hash(c),
+                "texts": llm.texts_hash(c["ai"], c["final"]),
             }
             done.append(c["id"])
         # Save after each chunk, so a stopped run keeps what it paid for.

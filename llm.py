@@ -6,6 +6,7 @@ calls.
 """
 
 import concurrent.futures as cf
+import hashlib
 import json
 import os
 import threading
@@ -124,6 +125,13 @@ def pmap(fn, items):
 
 # Bump when the instructions or kinds change, so old labels are redone on purpose.
 CLASSIFIER_VERSION = 1
+
+
+def texts_hash(ai: str, final: str) -> str:
+    """Fingerprint of the two texts a label judged, so a label only counts for them."""
+    norm = " ".join
+    return hashlib.sha256(f"{norm(ai.split())}\0{norm(final.split())}".encode()).hexdigest()
+
 
 KINDS = {
     "fact": "the AI text said something the article does not support, and the editors fixed it",

@@ -8,7 +8,7 @@ import statistics
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from llm import CLASSIFIER_VERSION
+from llm import CLASSIFIER_VERSION, texts_hash
 
 # Bucket thresholds, by token-edit fraction (Levenshtein over word tokens).
 ACCURATE_MAX = 0.05  # <=5% of words changed
@@ -16,7 +16,7 @@ EDITED_MAX = 0.40  # 5-40% of words changed; rewritten = the remainder
 WORD_LIMIT = 65  # what the speech prompt asks for
 
 # Kinds of change per edited story, from label.py. Missing file = no label columns.
-# Labels from an older classifier version do not count.
+# A label counts only for the classifier version and the exact texts it judged.
 labels = json.loads(Path("labels.json").read_text()) if Path("labels.json").exists() else {}
 labels = {k: v for k, v in labels.items() if v.get("version") == CLASSIFIER_VERSION}
 
@@ -67,6 +67,10 @@ for s in stories:
             "labellable": s.get("status") == "expired" and not s.get("deleted_at"),
         }
     )
+
+# Drop labels whose texts changed since they were made.
+current = {str(x["id"]): texts_hash(x["ai"], x["final"]) for x in usable}
+labels = {k: v for k, v in labels.items() if v.get("texts") == current.get(k)}
 
 print(f"total stories: {len(stories)}")
 print(f"usable (both AI + final present): {len(usable)}")
