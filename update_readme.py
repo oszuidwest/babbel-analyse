@@ -193,6 +193,13 @@ def render_words_chart(weeks: list[dict]) -> str:
     return "\n".join(parts)
 
 
+def kind_cell(w: dict, kind: str) -> str:
+    """Share of the week's edited stories with this kind; a dash when not all are labelled."""
+    if w["kinds"] is None:
+        return " - |"
+    return f" {w['kinds'].get(kind, 0) / w['edited_done'] * 100:.0f}% |"
+
+
 def render_table(weeks: list[dict]) -> str:
     kinds = "".join(f" % {k} |" for k in PUBLISHED_KINDS)
     header = (
@@ -212,10 +219,7 @@ def render_table(weeks: list[dict]) -> str:
             f"{w['words_final_mean']:.0f} | "
             f"{w['over_65_ai'] / n * 100:.0f}% | "
             f"{w['over_65_final'] / n * 100:.0f}% |"
-            + "".join(
-                f" {w['kinds'].get(k, 0) / w['edited_done'] * 100:.0f}% |" if w["kinds"] is not None else " - |"
-                for k in PUBLISHED_KINDS
-            )
+            + "".join(kind_cell(w, k) for k in PUBLISHED_KINDS)
         )
     return header + "\n".join(rows) + "\n"
 
