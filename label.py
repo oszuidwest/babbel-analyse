@@ -33,20 +33,19 @@ INSTRUCTIONS = (
 )
 
 
-def classify(batch):
-    """The model's answer items for one batch of stories."""
-    text = 'Answer in JSON: {"items": [{"id": "...", "kinds": ["..."]}]}\n\n' + "\n\n".join(
-        f"ITEM {c['id']}\nARTICLE: {c['article'][:ARTICLE_CHARS]}\nAI: {c['ai']}\n"
-        f"BROADCAST: {c['final']}"
-        for c in batch
-    )
-    body = {
-        "model": MODEL,
-        "instructions": INSTRUCTIONS,
-        "input": text,
-        "max_output_tokens": OUTPUT_TOKENS,
-        "text": {"format": {"type": "json_object"}},
-    }
+calls = 0
+
+
+def call(instructions, text, model=MODEL, json_mode=True, max_tokens=OUTPUT_TOKENS):
+    """One OpenAI Responses call; the answer text, or None when it did not complete."""
+    global calls
+    if calls >= MAX_CALLS:
+        raise RuntimeError(f"MAX_CALLS ({MAX_CALLS}) reached")
+    calls += 1
+    body = {"model": model, "instructions": instructions, "input": text}
+    body["max_output_tokens"] = max_tokens
+    if json_mode:
+        body["text"] = {"format": {"type": "json_object"}}
     req = urllib.request.Request(
         "https://api.openai.com/v1/responses",
         data=json.dumps(body).encode(),
@@ -58,11 +57,21 @@ def classify(batch):
     with urllib.request.urlopen(req, timeout=300) as r:
         res = json.load(r)
     if res.get("status") != "completed":
-        return []
-    out = "".join(
+        return None
+    return "".join(
         c.get("text", "") for o in res["output"] if o["type"] == "message" for c in o["content"]
     )
-    return json.loads(out)["items"]
+
+
+def classify(batch):
+    """The model's answer items for one batch of stories."""
+    text = 'Answer in JSON: {"items": [{"id": "...", "kinds": ["..."]}]}\n\n' + "\n\n".join(
+        f"ITEM {c['id']}\nARTICLE: {c['article'][:ARTICLE_CHARS]}\nAI: {c['ai']}\n"
+        f"BROADCAST: {c['final']}"
+        for c in batch
+    )
+    out = call(INSTRUCTIONS, text)
+    return json.loads(out)["items"] if out else []
 
 
 def key(c) -> str:

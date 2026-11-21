@@ -6,3 +6,4 @@ mt-report.md
 *.png
 sanity.py
 __pycache__/
+reports/*.json
