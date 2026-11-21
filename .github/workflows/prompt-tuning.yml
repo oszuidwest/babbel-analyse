@@ -39,11 +39,11 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ "$ACCEPTED" = true ]; then
-            branch="prompt/$(date -u +%Y-%m)"
+            branch="prompt/$(date -u +%Y-%m)-$GITHUB_RUN_ID"  # a rerun never overwrites a branch
             git switch -c "$branch"
             git add speech-prompt.txt reports/
             git commit -m "feat: new speech prompt for $(date -u +%Y-%m)"
-            git push --force origin "$branch"
+            git push origin "$branch"
             gh pr create --head "$branch" --title "feat: new speech prompt for $(date -u +%Y-%m)" \
               --body "See $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$branch/$REPORT. Merging puts the prompt live."
           else

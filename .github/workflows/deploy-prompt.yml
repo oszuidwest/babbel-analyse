@@ -18,6 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: main  # a queued run deploys what main has now, not its own older commit
           fetch-depth: 0  # every committed version of the prompt
 
       - name: Put the prompt live in WordPress
