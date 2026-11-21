@@ -5,6 +5,8 @@ Reads stories.json (from fetch_all.py) and keeps labels.json up to date: one ent
 finished story where the editors changed more than 5% of the words. A story is labelled
 once; it is labelled again only when its texts change or the classifier version changes.
 
+Only stories from the last --days days (default 92, about three months) are labelled.
+
 The classifier needs the article the AI worked from. New stories carry it in
 metadata.generation (recorded by the plugin). For older stories, --articles takes a JSON
 file {story_id: article} rebuilt from WordPress revisions. Stories without an article are
@@ -15,6 +17,7 @@ before they are published in the README.
 """
 
 import argparse
+import datetime as dt
 import difflib
 import hashlib
 import json
@@ -124,6 +127,7 @@ def main():
     ap.add_argument("--articles", type=Path, help="JSON {story_id: article} for old stories")
     ap.add_argument("--model", default=os.environ.get("LABEL_MODEL", "gpt-5.6-sol"))
     ap.add_argument("--sample", type=int, help="label a random sample and write pilot.md")
+    ap.add_argument("--days", type=int, default=92, help="only stories this recent")
     args = ap.parse_args()
     if not os.environ.get("OPENAI_API_KEY"):
         sys.exit("OPENAI_API_KEY must be set")
@@ -132,6 +136,9 @@ def main():
     stories = json.loads(args.stories.read_text())
     articles = json.loads(args.articles.read_text()) if args.articles else {}
     labels = json.loads(LABELS_PATH.read_text()) if LABELS_PATH.exists() else {}
+    since = (dt.datetime.now(dt.UTC) - dt.timedelta(days=args.days)).isoformat()
+    # Babbel's created_at is UTC with a Z; compare on the date and time digits only.
+    stories = [s for s in stories if s["created_at"].replace("Z", "+00:00") >= since]
     cases, no_article = edited_cases(stories, articles)
 
     todo = [

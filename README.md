@@ -39,7 +39,8 @@ A GitHub Action runs every Monday night at 03:00 NL time, refreshes the data and
 `label.py` asks a model what kind of change the editors made to each edited story (over 5%
 of words changed): a fact fixed, something missing from the article added, information
 added that is not in the article, timing, a style rule or taste. One story can have several
-kinds. The labels are kept per story in `labels.json`, so each story is labelled once. A
+kinds. It only looks at stories from the last three months (`--days`, default 92). The
+labels are kept per story in `labels.json`, so each story is labelled once. A
 story is labelled again only when its texts change or the classifier changes.
 
 The model needs the article the AI worked from. New stories carry it in their Babbel
