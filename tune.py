@@ -22,8 +22,8 @@ PROMPT = Path("speech-prompt.txt")
 PROD_MODEL = os.environ.get("PROD_MODEL", "gpt-5.6-sol")  # keep equal to the plugin setting
 DAYS, TEST, LEARN, MIN_LEARN = 35, 40, 60, 30
 WORD_LIMIT = 70  # soft: the editors publish over 65 words in about 40% of the stories
-# Longer stories and prompts are skipped, not cut, so the test sees the real input and a
-# run stays under about 2.5 million input tokens (80 texts, 40 judgements, 1 proposal).
+# Longer stories and proposed prompts are skipped, not cut, so the test sees the real
+# input; with at most 121 calls these limits bound what a run sends.
 ARTICLE_MAX, TEXT_MAX, PROMPT_MAX = 8000, 1500, 4000
 
 # Mirrors includes/ai-handler.php in zw-knabbel-wp.

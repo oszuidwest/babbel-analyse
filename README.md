@@ -53,9 +53,9 @@ model. A model compares each pair blindly with the broadcast text and checks bot
 the article. The new prompt wins only when it is better often enough to rule out luck
 (sign test, p < 0.05), with no more unsupported statements or texts over 70 words. Then
 the workflow opens a pull request; otherwise it saves the report in `reports/`. A run
-makes at most 121 calls (the cap is 130) and skips very long stories and proposals, so it
-stays under about 2.5 million input tokens; a normal run uses about 0.7 million. The prompt diff in the pull
-request is the check that a new prompt keeps the newsroom's rules.
+makes at most 121 calls (the cap is 130) and skips very long stories and proposals, which
+bounds what it sends. The prompt diff in the pull request is the check that a new prompt
+keeps the newsroom's rules.
 
 Merging puts the prompt live through the plugin's REST route. The deploy only replaces a
 prompt that was once committed here, so restoring an older committed prompt by hand in

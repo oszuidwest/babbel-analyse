@@ -48,5 +48,6 @@ jobs:
               --body "See $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$branch/$REPORT. Merging puts the prompt live."
           else
             git add reports/
-            git commit -m "chore: monthly prompt check report" && git push
+            git commit -m "chore: monthly prompt check report"
+            git pull --rebase && git push  # main may have moved, for example by the weekly stats
           fi
