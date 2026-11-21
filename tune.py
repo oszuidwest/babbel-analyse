@@ -71,7 +71,7 @@ def cases(stories, prompt):
             "ai": md.get("original_speech_text"),
             "final": s.get("text"),
         }
-        c["article"] = gen.get("article")
+        c |= {"article": gen.get("article"), "generated_at": gen.get("generated_at")}
         if (
             s["created_at"] >= since
             and s.get("status") == "expired"
@@ -94,7 +94,7 @@ def generate(prompt, examples, c):
         user = EXAMPLE.format(lab) + "\n\n" + ARTICLE.format(" ".join(e["article"].split()))
         msgs += [{"role": "user", "content": user}, {"role": "assistant", "content": e["final"]}]
     msgs.append({"role": "user", "content": ARTICLE.format(c["article"])})
-    instructions = with_year(prompt, c["created_at"])
+    instructions = with_year(prompt, c["generated_at"])  # the year the plugin filled in
     return label.call(instructions, msgs, model=PROD_MODEL, json_mode=False, max_tokens=1000)
 
 
