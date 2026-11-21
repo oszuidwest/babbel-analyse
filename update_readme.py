@@ -213,7 +213,7 @@ def render_table(weeks: list[dict]) -> str:
             f"{w['over_65_ai'] / n * 100:.0f}% | "
             f"{w['over_65_final'] / n * 100:.0f}% |"
             + "".join(
-                f" {w['kinds'].get(k, 0) / w['edited_done'] * 100:.0f}% |" if w["kinds"] else " - |"
+                f" {w['kinds'].get(k, 0) / w['edited_done'] * 100:.0f}% |" if w["kinds"] is not None else " - |"
                 for k in PUBLISHED_KINDS
             )
         )

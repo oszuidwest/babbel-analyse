@@ -142,6 +142,8 @@ def main():
         for i in range(0, len(pending), BATCH):
             batch = pending[i : i + BATCH]
             for sid, kinds in classify(args.model, batch).items():
+                if not kinds:
+                    continue  # no valid kind: leave it for the next run
                 c = next(c for c in batch if c["id"] == sid)
                 labels[sid] = {
                     "kinds": kinds,
@@ -149,7 +151,9 @@ def main():
                     "texts": texts_hash(c["ai"], c["final"]),
                 }
             # Save after every call, so a stopped run keeps what it paid for.
-            LABELS.write_text(json.dumps(labels, ensure_ascii=False, indent=1, sort_keys=True))
+            tmp = LABELS.with_suffix(".tmp")
+            tmp.write_text(json.dumps(labels, ensure_ascii=False, indent=1, sort_keys=True))
+            tmp.replace(LABELS)  # a stopped run never leaves a half-written file
     finally:
         print(f"{calls} calls made")
 
