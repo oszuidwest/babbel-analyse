@@ -36,13 +36,12 @@ A GitHub Action runs every Monday night at 03:00 NL time, refreshes the data and
 
 ## Kinds of change
 
-`label.py` asks a model which kinds of change the editors made to each finished story of
-the last 92 days with more than 5% of words changed: a fact fixed, something from the
-article that was missing, information not in the article, timing, style or taste. Labels
-are kept in `labels.json`. A run makes at most `MAX_CALLS` calls (default 5) of capped
-size. A week shows a kind only when all its edited stories have a label, as a share of
-them, and only for kinds in `PUBLISHED_KINDS`, which stays empty until an editor has
-checked a sample (`label.py --sample 40`).
+`label.py` labels the kinds of change (see `KINDS`) in each finished story of the last 92
+days with over 5% of words changed, into `labels.json`. A run makes at most `MAX_CALLS`
+calls (default 5), each with a capped article and answer. A week shows a kind only when
+all its edited stories have a label, and only for kinds in `PUBLISHED_KINDS`, which stays
+empty until an editor has checked a sample. Older stories need `--articles`, the articles
+rebuilt from WordPress revisions; without an article a story stays unlabelled.
 
 ## Running locally
 

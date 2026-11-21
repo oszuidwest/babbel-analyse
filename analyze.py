@@ -33,17 +33,6 @@ def char_similarity(a: str, b: str) -> float:
     return difflib.SequenceMatcher(a=a, b=b, autojunk=False).ratio()
 
 
-def token_edit_fraction(a: list[str], b: list[str]) -> float:
-    """Fraction of tokens changed when going AI -> final.
-    1 - (matched_tokens / max(len_ai, len_final))."""
-    if not a and not b:
-        return 0.0
-    sm = difflib.SequenceMatcher(a=a, b=b, autojunk=False)
-    matched = sum(t.size for t in sm.get_matching_blocks())
-    denom = max(len(a), len(b)) or 1
-    return 1 - matched / denom
-
-
 # Filter to stories with both AI text and final text
 usable = []
 for s in stories:
@@ -73,7 +62,7 @@ for s in usable:
     iso_year, iso_week, _ = d.isocalendar()
     key = f"{iso_year}-W{iso_week:02d}"
     s["char_sim"] = char_similarity(norm(s["ai"]), norm(s["final"]))
-    s["tok_edit"] = token_edit_fraction(tokens(s["ai"]), tokens(s["final"]))
+    s["tok_edit"] = label.edit_fraction(s["ai"], s["final"])
     s["len_ratio"] = len(norm(s["final"])) / max(len(norm(s["ai"])), 1)
     s["unchanged"] = norm(s["ai"]) == norm(s["final"])
     weekly[key].append(s)
