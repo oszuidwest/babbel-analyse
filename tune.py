@@ -22,9 +22,9 @@ PROMPT = Path("speech-prompt.txt")
 PROD_MODEL = os.environ.get("PROD_MODEL", "gpt-5.6-sol")  # keep equal to the plugin setting
 DAYS, TEST, LEARN, MIN_LEARN = 35, 40, 60, 30
 WORD_LIMIT = 70  # soft: the editors publish over 65 words in about 40% of the stories
-# Longer stories are skipped, not cut, so the test sees the real input and a run stays
-# under about 2.3 million input tokens (80 texts, 40 judgements, 1 proposal).
-ARTICLE_MAX, TEXT_MAX = 8000, 1500
+# Longer stories and prompts are skipped, not cut, so the test sees the real input and a
+# run stays under about 2.5 million input tokens (80 texts, 40 judgements, 1 proposal).
+ARTICLE_MAX, TEXT_MAX, PROMPT_MAX = 8000, 1500, 4000
 
 # Mirrors includes/ai-handler.php in zw-knabbel-wp.
 ARTICLE = 'Artikel:\n"""\n{}\n"""'
@@ -137,6 +137,8 @@ def check(prompt, cs):
     new = proposal["prompt"]
     if new.strip() == prompt.strip():
         return lines + ["", "No change: nothing recurring to act on."], None
+    if len(new) > PROMPT_MAX:
+        return lines + ["", f"No change: the proposal is over {PROMPT_MAX} characters."], None
 
     count = {"new": 0, "current": 0, "same": 0}
     unsupported = {"new": 0, "current": 0}
