@@ -43,6 +43,26 @@ all its edited stories have a label, and only for kinds in `PUBLISHED_KINDS`, wh
 empty until an editor has checked a sample. Older stories need `--articles`, the articles
 rebuilt from WordPress revisions; without an article a story stays unlabelled.
 
+## Monthly prompt check
+
+`speech-prompt.txt` is the prompt that is live in the Knabbel plugin. On the first of the
+month, `tune.py` takes the stories of the last 35 days made with that prompt (the plugin
+records the article and prompt in `metadata.generation`), asks a model for a better prompt
+from the edited ones, and tests both prompts on the newest 40 stories with the production
+model. A model compares each pair blindly with the broadcast text and checks both against
+the article. The new prompt wins only when it is better often enough to rule out luck
+(sign test, p < 0.05), with no more unsupported statements or texts over 70 words. Then
+the workflow opens a pull request; otherwise it saves the report in `reports/`. A run
+makes at most 121 calls (the cap is 130) and skips very long stories and proposals, which
+bounds what it sends. The prompt diff in the pull request is the check that a new prompt
+keeps the newsroom's rules.
+
+Merging puts the prompt live through the plugin's REST route. The deploy only replaces a
+prompt that was once committed here, so restoring an older committed prompt by hand in
+WordPress does not stop it. If the live prompt was changed by hand, the deploy stops. To
+keep that change, commit it as `speech-prompt.txt`, then commit the new prompt again. To
+drop it, put a committed version back in WordPress and rerun the deploy workflow.
+
 ## Running locally
 
 ```sh
@@ -56,4 +76,6 @@ python3 analyze.py     # writes weekly.json
 
 - `BABBEL_USERNAME`
 - `BABBEL_PASSWORD`
-- `OPENAI_API_KEY`: for `label.py`
+- `OPENAI_API_KEY`: for `label.py` and `tune.py`
+- `WP_PROMPT_USER`, `WP_PROMPT_PASSWORD`: a WordPress user with the Knabbel prompt bot
+  role and an application password, for the deploy

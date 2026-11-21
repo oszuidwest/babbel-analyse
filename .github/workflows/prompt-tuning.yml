@@ -1,0 +1,53 @@
+name: Monthly prompt check
+
+on:
+  schedule:
+    - cron: "0 4 1 * *"  # 04:00 UTC on the first of the month
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  tune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch stories
+        env:
+          BABBEL_USERNAME: ${{ secrets.BABBEL_USERNAME }}
+          BABBEL_PASSWORD: ${{ secrets.BABBEL_PASSWORD }}
+        run: python3 fetch_all.py
+
+      - name: Learn from the edits and test a new prompt
+        id: tune
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PROD_MODEL: ${{ vars.PROD_MODEL || 'gpt-5.6-sol' }}
+          MAX_CALLS: "130"
+        run: python3 tune.py >> "$GITHUB_OUTPUT"
+
+      - name: Open a pull request or save the report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT: ${{ steps.tune.outputs.report }}
+          ACCEPTED: ${{ steps.tune.outputs.accepted }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "$ACCEPTED" = true ]; then
+            branch="prompt/$(date -u +%Y-%m)-$GITHUB_RUN_ID"  # a rerun never overwrites a branch
+            git switch -c "$branch"
+            git add speech-prompt.txt reports/
+            git commit -m "feat: new speech prompt for $(date -u +%Y-%m)"
+            git push origin "$branch"
+            gh pr create --head "$branch" --title "feat: new speech prompt for $(date -u +%Y-%m)" \
+              --body "See $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$branch/$REPORT. Merging puts the prompt live."
+          else
+            git add reports/
+            git commit -m "chore: monthly prompt check report"
+            git pull --rebase && git push  # main may have moved, for example by the weekly stats
+          fi

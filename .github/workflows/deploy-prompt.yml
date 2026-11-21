@@ -1,0 +1,29 @@
+name: Deploy speech prompt
+
+on:
+  push:
+    branches: [main]
+    paths: [speech-prompt.txt]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-prompt
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main  # a queued run deploys what main has now, not its own older commit
+          fetch-depth: 0  # every committed version of the prompt
+          persist-credentials: false  # only reads history
+
+      - name: Put the prompt live in WordPress
+        env:
+          WP_PROMPT_USER: ${{ secrets.WP_PROMPT_USER }}
+          WP_PROMPT_PASSWORD: ${{ secrets.WP_PROMPT_PASSWORD }}
+        run: python3 deploy_prompt.py
