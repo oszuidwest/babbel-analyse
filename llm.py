@@ -168,7 +168,11 @@ CLASSIFY_INSTRUCTIONS = (
 
 
 def classify(model, cases, word_diff, batch_size=12):
-    """Label the editors' changes per case; cases need id, article, ai and final."""
+    """Label the editors' changes per case; cases need id, article, ai and final.
+
+    Returns (items, stopped). When the budget runs out, the batches that finished are
+    still returned, so their cost is not lost, and stopped is True.
+    """
     batches = [cases[i : i + batch_size] for i in range(0, len(cases), batch_size)]
 
     def run(batch):
@@ -177,9 +181,13 @@ def classify(model, cases, word_diff, batch_size=12):
             f"PUBLISHED: {c['final']}\nWORD DIFF: {word_diff(c['ai'], c['final'])}"
             for c in batch
         )
-        r = openai(model, CLASSIFY_INSTRUCTIONS, [("user", text)], 16000, CLASSIFY_SCHEMA)
+        try:
+            r = openai(model, CLASSIFY_INSTRUCTIONS, [("user", text)], 16000, CLASSIFY_SCHEMA)
+        except BudgetExceededError:
+            return None
         wanted = {str(c["id"]) for c in batch}
         # Keep only items for stories that were sent in.
         return [i for i in (r["items"] if r else []) if i["id"] in wanted]
 
-    return [item for items in pmap(run, batches) for item in items]
+    results = pmap(run, batches)
+    return [item for items in results if items for item in items], None in results

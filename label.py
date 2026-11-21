@@ -155,24 +155,25 @@ def main():
     )
 
     done = []
-    try:
-        for i in range(0, len(todo), 120):
-            chunk = todo[i : i + 120]
-            for item in llm.classify(model, chunk, word_diff):
-                c = next(c for c in chunk if c["id"] == item["id"])
-                labels[c["id"]] = {
-                    "kinds": sorted(set(item["kinds"])),
-                    "rules": item["rules"],
-                    "source": c["source"],
-                    "model": model,
-                    "version": llm.CLASSIFIER_VERSION,
-                    "input": input_hash(c),
-                }
-                done.append(c["id"])
-            # Save after each chunk, so a stopped run keeps what it paid for.
-            LABELS_PATH.write_text(json.dumps(labels, ensure_ascii=False, indent=1, sort_keys=True))
-    except llm.BudgetExceededError as e:
-        print(f"stopped: {e}", file=sys.stderr)
+    for i in range(0, len(todo), 120):
+        chunk = todo[i : i + 120]
+        items, stopped = llm.classify(model, chunk, word_diff)
+        for item in items:
+            c = next(c for c in chunk if c["id"] == item["id"])
+            labels[c["id"]] = {
+                "kinds": sorted(set(item["kinds"])),
+                "rules": item["rules"],
+                "source": c["source"],
+                "model": model,
+                "version": llm.CLASSIFIER_VERSION,
+                "input": input_hash(c),
+            }
+            done.append(c["id"])
+        # Save after each chunk, so a stopped run keeps what it paid for.
+        LABELS_PATH.write_text(json.dumps(labels, ensure_ascii=False, indent=1, sort_keys=True))
+        if stopped:
+            print("stopped: token budget used up", file=sys.stderr)
+            break
 
     if args.sample:
         write_pilot(Path("pilot.md"), [c for c in todo if c["id"] in labels], labels)

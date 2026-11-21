@@ -49,10 +49,11 @@ metadata. For older stories, `--articles` takes the text rebuilt from WordPress 
 The kinds only show up in the table after an editor has checked a sample: run
 `label.py --sample 40`, have an editor check `pilot.md`, and list the kinds that hold up in
 `PUBLISHED_KINDS` in `update_readme.py`. A week shows a dash for a kind when fewer than 80%
-of its edited stories have a label.
+of its edited stories that finished airing have a label.
 
-Every run that calls OpenAI stops when it has used `MAX_INPUT_TOKENS` or
-`MAX_OUTPUT_TOKENS`, as reported by OpenAI.
+Every run that calls OpenAI stops starting new calls once it has used `MAX_INPUT_TOKENS`
+or `MAX_OUTPUT_TOKENS`, as reported by OpenAI. Calls that are already running still
+finish, so a run can go over by up to six calls.
 
 ## Running locally
 

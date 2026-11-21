@@ -8,13 +8,17 @@ import statistics
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from llm import CLASSIFIER_VERSION
+
 # Bucket thresholds, by token-edit fraction (Levenshtein over word tokens).
 ACCURATE_MAX = 0.05  # <=5% of words changed
 EDITED_MAX = 0.40  # 5-40% of words changed; rewritten = the remainder
 WORD_LIMIT = 65  # what the speech prompt asks for
 
 # Kinds of change per edited story, from label.py. Missing file = no label columns.
+# Labels from an older classifier version do not count.
 labels = json.loads(Path("labels.json").read_text()) if Path("labels.json").exists() else {}
+labels = {k: v for k, v in labels.items() if v.get("version") == CLASSIFIER_VERSION}
 
 with open("stories.json") as f:
     stories = json.load(f)
@@ -59,6 +63,8 @@ for s in stories:
             "created_at": s["created_at"],
             "ai": ai,
             "final": final,
+            # label.py only labels stories that finished airing and were not deleted.
+            "labellable": s.get("status") == "expired" and not s.get("deleted_at"),
         }
     )
 
@@ -103,7 +109,7 @@ for week in sorted(weekly):
     lens = [x["len_ratio"] for x in items]
     words_ai = [len(tokens(x["ai"])) for x in items]
     words_final = [len(tokens(x["final"])) for x in items]
-    edited_ids = [str(x["id"]) for x in items if x["tok_edit"] > ACCURATE_MAX]
+    edited_ids = [str(x["id"]) for x in items if x["tok_edit"] > ACCURATE_MAX and x["labellable"]]
     kinds = Counter(k for i in edited_ids if i in labels for k in labels[i]["kinds"])
     accurate = sum(1 for x in items if x["tok_edit"] <= ACCURATE_MAX)
     edited = sum(1 for x in items if ACCURATE_MAX < x["tok_edit"] <= EDITED_MAX)
