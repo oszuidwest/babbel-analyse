@@ -17,16 +17,8 @@ BUCKETS_CHART_PATH = Path("chart-buckets.svg")
 WORDS_CHART_PATH = Path("chart-words.svg")
 README_PATH = Path("README.md")
 DATA_PATH = Path("weekly.json")
-# Kinds of change shown in the table, once an editor has checked that the labels are right.
+# Kinds of change shown in the table, once an editor has checked a sample of labels.
 PUBLISHED_KINDS: tuple[str, ...] = ()
-KIND_HEADERS = {
-    "fact": "% fact fixed",
-    "missing": "% missing",
-    "extra": "% extra info",
-    "timing": "% timing",
-    "style": "% style",
-    "taste": "% taste",
-}
 BEGIN = "<!-- BEGIN:STATS -->"
 END = "<!-- END:STATS -->"
 
@@ -202,45 +194,30 @@ def render_words_chart(weeks: list[dict]) -> str:
 
 
 def render_table(weeks: list[dict]) -> str:
-    columns = ["Week", "n", "% accurate", "% edited", "% rewritten", "Words AI", "Words pub."]
-    columns += ["% AI > 65", "% pub. > 65"]
-    columns += [KIND_HEADERS[k] for k in PUBLISHED_KINDS]
-    header = "| " + " | ".join(columns) + " |\n| --- |" + " ---: |" * (len(columns) - 1) + "\n"
+    kinds = "".join(f" % {k} |" for k in PUBLISHED_KINDS)
+    header = (
+        "| Week | n | % accurate | % edited | % rewritten | Words AI | Words pub. "
+        f"| % AI > 65 | % pub. > 65 |{kinds}\n"
+        "| --- |" + " ---: |" * (8 + len(PUBLISHED_KINDS)) + "\n"
+    )
     rows = []
     for w in weeks:
         n = w["n"] or 1
-        cells = [
-            w["week"],
-            str(w["n"]),
-            f"{w['accurate'] / n * 100:.0f}%",
-            f"{w['edited'] / n * 100:.0f}%",
-            f"{w['rewritten'] / n * 100:.0f}%",
-            f"{w['words_ai_mean']:.0f}",
-            f"{w['words_final_mean']:.0f}",
-            f"{w['over_limit_ai'] / n * 100:.0f}%",
-            f"{w['over_limit_final'] / n * 100:.0f}%",
-        ]
-        for k in PUBLISHED_KINDS:
-            # A share of the labelled edited stories; a dash when too few are labelled.
-            lab = w["labelled"]
-            ok = lab and lab >= 0.8 * w["edited_total"]
-            cells.append(f"{w['kinds'].get(k, 0) / lab * 100:.0f}%" if ok else "-")
-        rows.append("| " + " | ".join(cells) + " |")
+        rows.append(
+            f"| {w['week']} | {w['n']} | "
+            f"{w['accurate'] / n * 100:.0f}% | "
+            f"{w['edited'] / n * 100:.0f}% | "
+            f"{w['rewritten'] / n * 100:.0f}% | "
+            f"{w['words_ai_mean']:.0f} | "
+            f"{w['words_final_mean']:.0f} | "
+            f"{w['over_65_ai'] / n * 100:.0f}% | "
+            f"{w['over_65_final'] / n * 100:.0f}% |"
+            + "".join(
+                f" {w['kinds'].get(k, 0) / w['edited_done'] * 100:.0f}% |" if w["kinds"] else " - |"
+                for k in PUBLISHED_KINDS
+            )
+        )
     return header + "\n".join(rows) + "\n"
-
-
-TABLE_NOTES = (
-    "The > 65 columns show the share of stories over the 65 words the prompt asks for. "
-    "The editors publish longer texts more often than the AI writes them."
-    + (
-        " The kind columns show, of the edited stories (over 5% of words changed), how "
-        "many had that kind of change, as labelled by a model and checked on a sample by "
-        "an editor. One story can have several kinds."
-        if PUBLISHED_KINDS
-        else ""
-    )
-    + "\n"
-)
 
 
 def cache_bust(path: Path) -> str:
@@ -268,8 +245,7 @@ def render_section(weeks: list[dict]) -> str:
         f"{headline}\n\n"
         f"![Share of accurate / edited / rewritten per week]({buckets_url})\n\n"
         f"![Mean word count AI vs. published per week]({words_url})\n\n"
-        f"{render_table(table_weeks).rstrip()}\n\n"
-        f"{TABLE_NOTES}"
+        f"{render_table(table_weeks).rstrip()}\n"
         f"{END}"
     )
 

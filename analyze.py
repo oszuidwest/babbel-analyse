@@ -8,20 +8,15 @@ import statistics
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from llm import CLASSIFIER_VERSION, texts_hash
+import label
 
 # Bucket thresholds, by token-edit fraction (Levenshtein over word tokens).
 ACCURATE_MAX = 0.05  # <=5% of words changed
 EDITED_MAX = 0.40  # 5-40% of words changed; rewritten = the remainder
-WORD_LIMIT = 65  # what the speech prompt asks for
-
-# Kinds of change per edited story, from label.py. Missing file = no label columns.
-# A label counts only for the classifier version and the exact texts it judged.
-labels = json.loads(Path("labels.json").read_text()) if Path("labels.json").exists() else {}
-labels = {k: v for k, v in labels.items() if v.get("version") == CLASSIFIER_VERSION}
 
 with open("stories.json") as f:
     stories = json.load(f)
+labels = json.loads(Path("labels.json").read_text()) if Path("labels.json").exists() else {}
 
 
 def norm(s: str) -> str:
@@ -63,14 +58,9 @@ for s in stories:
             "created_at": s["created_at"],
             "ai": ai,
             "final": final,
-            # label.py only labels stories that finished airing and were not deleted.
-            "labellable": s.get("status") == "expired" and not s.get("deleted_at"),
+            "done": s.get("status") == "expired" and not s.get("deleted_at"),
         }
     )
-
-# Drop labels whose texts changed since they were made.
-current = {str(x["id"]): texts_hash(x["ai"], x["final"]) for x in usable}
-labels = {k: v for k, v in labels.items() if v.get("texts") == current.get(k)}
 
 print(f"total stories: {len(stories)}")
 print(f"usable (both AI + final present): {len(usable)}")
@@ -113,8 +103,10 @@ for week in sorted(weekly):
     lens = [x["len_ratio"] for x in items]
     words_ai = [len(tokens(x["ai"])) for x in items]
     words_final = [len(tokens(x["final"])) for x in items]
-    edited_ids = [str(x["id"]) for x in items if x["tok_edit"] > ACCURATE_MAX and x["labellable"]]
-    kinds = Counter(k for i in edited_ids if i in labels for k in labels[i]["kinds"])
+    # Kinds of change, only when every finished edited story of the week has a current label.
+    to_label = [x for x in items if x["done"] and x["tok_edit"] > ACCURATE_MAX]
+    found = [labels.get(str(x["id"])) for x in to_label]
+    covered = to_label and all(label.is_current(f, x) for f, x in zip(found, to_label, strict=True))
     accurate = sum(1 for x in items if x["tok_edit"] <= ACCURATE_MAX)
     edited = sum(1 for x in items if ACCURATE_MAX < x["tok_edit"] <= EDITED_MAX)
     rewritten = n - accurate - edited
@@ -133,11 +125,10 @@ for week in sorted(weekly):
             "rewritten": rewritten,
             "words_ai_mean": mean(words_ai),
             "words_final_mean": mean(words_final),
-            "over_limit_ai": sum(w > WORD_LIMIT for w in words_ai),
-            "over_limit_final": sum(w > WORD_LIMIT for w in words_final),
-            "edited_total": len(edited_ids),
-            "labelled": sum(i in labels for i in edited_ids),
-            "kinds": dict(sorted(kinds.items())),
+            "over_65_ai": sum(w > 65 for w in words_ai),
+            "over_65_final": sum(w > 65 for w in words_final),
+            "edited_done": len(to_label),
+            "kinds": dict(Counter(k for lab in found for k in lab["kinds"])) if covered else None,
         }
     )
     print(

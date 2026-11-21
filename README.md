@@ -36,24 +36,13 @@ A GitHub Action runs every Monday night at 03:00 NL time, refreshes the data and
 
 ## Kinds of change
 
-`label.py` asks a model what kind of change the editors made to each edited story (over 5%
-of words changed): a fact fixed, something missing from the article added, information
-added that is not in the article, timing, a style rule or taste. One story can have several
-kinds. It only looks at stories from the last three months (`--days`, default 92). The
-labels are kept per story in `labels.json`, so each story is labelled once. A
-story is labelled again only when its texts change or the classifier changes.
-
-The model needs the article the AI worked from. New stories carry it in their Babbel
-metadata. For older stories, `--articles` takes the text rebuilt from WordPress revisions.
-
-The kinds only show up in the table after an editor has checked a sample: run
-`label.py --sample 40`, have an editor check `pilot.md`, and list the kinds that hold up in
-`PUBLISHED_KINDS` in `update_readme.py`. A week shows a dash for a kind when fewer than 80%
-of its edited stories that finished airing have a label.
-
-Every run that calls OpenAI stops starting new calls once it has used `MAX_INPUT_TOKENS`
-or `MAX_OUTPUT_TOKENS`, as reported by OpenAI. Calls that are already running still
-finish, so a run can go over by up to six calls.
+`label.py` asks a model which kinds of change the editors made to each finished story of
+the last 92 days with more than 5% of words changed: a fact fixed, something from the
+article that was missing, information not in the article, timing, style or taste. Labels
+are kept in `labels.json`. A run makes at most `MAX_CALLS` calls (default 5) of capped
+size. A week shows a kind only when all its edited stories have a label, as a share of
+them, and only for kinds in `PUBLISHED_KINDS`, which stays empty until an editor has
+checked a sample (`label.py --sample 40`).
 
 ## Running locally
 
@@ -68,4 +57,4 @@ python3 analyze.py     # writes weekly.json
 
 - `BABBEL_USERNAME`
 - `BABBEL_PASSWORD`
-- `OPENAI_API_KEY`: for labelling the kinds of change
+- `OPENAI_API_KEY`: for `label.py`
